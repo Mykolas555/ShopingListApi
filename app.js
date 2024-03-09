@@ -6,7 +6,7 @@ const app = express()
 app.use(express.json())
 
 app.use(morgan('dev'))
-app.use('/api/v1/shL', itemRouter);
+app.use('/api/v1/shl', itemRouter);
 app.use('/api/v1/shl/users', usersRouter);
 
 module.exports = app;
