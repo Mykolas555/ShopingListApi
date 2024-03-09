@@ -16,6 +16,7 @@ exports.getUserItems = async (req, res) => {
                 },
             },
         });
+        return
     } catch (err) {
         res.status(404).json({
             status: "User Items not found",
