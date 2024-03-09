@@ -61,27 +61,38 @@ exports.login = async (req, res) => {
 
 exports.protect = async (req, res, next) => {
     let token;
-    try{
-        if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
-            token = req.headers.authorization.split(' ')[1]
-        }
-        if(!token){
-            throw new Error ('User was not authenticated')
-        }
-        const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-        const currentUser = await User.findById(decoded.id);
-        if(!currentUser){
-            throw new Error ('user not exist')
-        }
-        if(currentUser.changedPasswordAfter(decoded.iat)){
-            throw new Error ('user changed password')
-        }
-        req.user = currentUser
-    }catch(err){
-        res.status(400).json({
-            status:'Failed to protect route',
-            error: err.message
-        })
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
     }
-    next()
-}
+
+    if (!token) {
+        return next(new Error('User was not authenticated'));
+    }
+
+    let decoded;
+    try {
+        decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    } catch (error) {
+        return next(new Error('Invalid token'));
+    }
+
+    let currentUser;
+    try {
+        currentUser = await User.findById(decoded.id);
+    } catch (error) {
+        return next(new Error('User not found'));
+    }
+
+    if (!currentUser) {
+        return next(new Error('User not found'));
+    }
+
+    if (currentUser.changedPasswordAfter(decoded.iat)) {
+        return next(new Error('User changed password'));
+    }
+
+    req.user = currentUser;
+    next();
+};
+
