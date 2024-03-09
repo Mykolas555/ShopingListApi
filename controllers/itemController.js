@@ -1,7 +1,7 @@
 const Item = require('../models/itemModel')
 const User = require('../models/userModel');
 
-exports.getUserItems = async (req, res) => {
+exports.getUserItems = async (req, res, next) => {
     try {
         const user = await User.findById(req.params.userId);
         const userItems = await Item.find({ user: req.params.userId });
@@ -16,7 +16,7 @@ exports.getUserItems = async (req, res) => {
                 },
             },
         });
-        return
+        next()
     } catch (err) {
         res.status(404).json({
             status: "User Items not found",
