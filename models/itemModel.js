@@ -9,11 +9,12 @@ const ItemSchema = new mongoose.Schema({
     },
     location:{
         type:String,
-        required:[true, 'A item must have a location'],
+        required:[true, 'An item must have a location'],
         min: [2, 'last name has to have at least two symbols'],
     },
     amount: {
-        type:String
+        type:String,
+        required:[true, 'An item must have a amount']
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
