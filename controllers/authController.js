@@ -60,39 +60,47 @@ exports.login = async (req, res) => {
 
 
 exports.protect = async (req, res, next) => {
-    let token;
-
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
-    }
-
-    if (!token) {
-        return next(new Error('User was not authenticated'));
-    }
-
-    let decoded;
     try {
-        decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    } catch (error) {
-        return next(new Error('Invalid token'));
-    }
+        let token;
 
-    let currentUser;
-    try {
-        currentUser = await User.findById(decoded.id);
-    } catch (error) {
-        return next(new Error('User not found'));
-    }
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
 
-    if (!currentUser) {
-        return next(new Error('User not found'));
-    }
+        if (!token) {
+            return next(new Error('User was not authenticated'));
+        }
 
-    if (currentUser.changedPasswordAfter(decoded.iat)) {
-        return next(new Error('User changed password'));
-    }
+        let decoded;
+        try {
+            decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+        } catch (error) {
+            console.error('Error verifying token:', error.message);
+            return next(new Error('Invalid token'));
+        }
 
-    req.user = currentUser;
+        let currentUser;
+        try {
+            currentUser = await User.findById(decoded.id);
+        } catch (error) {
+            console.error('Error finding user:', error.message);
+            return next(new Error('User not found'));
+        }
+
+        if (!currentUser) {
+            return next(new Error('User not found'));
+        }
+
+        if (currentUser.changedPasswordAfter(decoded.iat)) {
+            return next(new Error('User changed password'));
+        }
+
+        req.user = currentUser;
+    } catch (err) {
+        res.status(400).json({
+            status: 'Failed to get route protection',
+            message: err.message
+        });
+    }
     next();
 };
-
